@@ -65,9 +65,10 @@ if __name__ == "__main__":
     SAVE_TRAIN_PATH = "data/train/"
     SAVE_TEST_PATH = "data/test/"
     NUM_POINTS = 2048
-    IMG_WIDTH = 64
-    IMG_HEIGHT = 64
+    IMG_WIDTH = 256
+    IMG_HEIGHT = 256
     save_train = SAVE_TRAIN_PATH + "train_" + str(NUM_POINTS) + "_" + str(IMG_WIDTH) + ".h5"
     save_test = SAVE_TEST_PATH + "test_" + str(NUM_POINTS) + "_" + str(IMG_WIDTH) + ".h5"
-    save_train_test_raster_data(RAW_TRAIN_PATH, save_train, RAW_TEST_PATH, save_test, NUM_POINTS,
-        IMG_WIDTH, IMG_HEIGHT)
+    # save_train_test_raster_data(RAW_TRAIN_PATH, save_train, RAW_TEST_PATH, save_test, NUM_POINTS,
+    #     IMG_WIDTH, IMG_HEIGHT)
+    save_raster_data(RAW_TEST_PATH, save_test, NUM_POINTS, IMG_WIDTH, IMG_HEIGHT)
