@@ -3,6 +3,8 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 from keras.utils import np_utils
+from tqdm import tqdm
+from projections import rasterize, planes
 
 def load_h5(h5_filename):
     f = h5py.File(h5_filename)
@@ -10,7 +12,23 @@ def load_h5(h5_filename):
     label = f['label'][:]
     return data, label
 
-def read_data(path, num_points, num_classes):
+def save_h5(h5_filename, data, label, data_dtype='float32', label_dtype='float32'):
+    h5_fout = h5py.File(h5_filename)
+    h5_fout.create_dataset(
+        'data', data=data,
+        compression='gzip', compression_opts=4,
+        dtype=data_dtype)
+    h5_fout.create_dataset(
+        'label', data=label,
+        compression='gzip', compression_opts=1,
+        dtype=label_dtype)
+    h5_fout.close()
+
+def read_data(path, num_points):
+    points, labels = load_h5(path)
+    return points, labels
+
+def read_raw_data(path, num_points):
     points = None
     labels = None
     filenames = [filename for filename in os.listdir(path) if filename.endswith('.h5')]
@@ -26,43 +44,30 @@ def read_data(path, num_points, num_classes):
             points = np.hstack((points, cur_points))
     X = points.reshape(-1, num_points, 3)
     Y = labels.reshape(-1, 1)
-    Y = np_utils.to_categorical(Y, num_classes)
     return X, Y
-    
-def plane_xequal1(point):
-    return (point[1], point[2], 1 - point[0])
-def plane_yequal1(point):
-    return (point[0], point[2], 1 - point[1])
-def plane_zequal1(point):
-    return (point[0], point[1], 1 - point[2])
-def plane_xequal_neg1(point):
-    return (point[1], point[2], abs(-1 - point[0]))
-def plane_yequal_neg1(point):
-    return (point[0], point[2], abs(-1 - point[1]))
-def plane_zequal_neg1(point):
-    return (point[0], point[1], abs(-1 - point[2]))
 
-planes = [plane_xequal1, plane_yequal1, plane_zequal1, plane_xequal_neg1, plane_yequal_neg1, plane_zequal_neg1]
+def save_raster_data(read_path, save_path, num_points, img_width, img_height):
+    points, labels = read_raw_data(read_path, num_points)
+    all_images = []
+    for _, point_cloud in enumerate(tqdm(points)):  
+        img = rasterize(point_cloud, img_width, img_height, planes)
+        all_images.append(img)
+    save_h5(save_path, all_images, labels)
 
-def rasterize(point_cloud, img_width, img_height, planes):
-    channels = len(planes)
-    projections = []
-    for plane in planes:
-        projection = [plane(point) for point in point_cloud]
-        projections.append(projection)
-    projections = np.array(projections)
-    projections[:,:,0:2] = (projections[:,:,0:2] * (img_width/2) + (img_width/2)).astype(np.int16)
-    projections[:,:,2] = projections[:,:,2]/2
-    
-    img = np.zeros((channels, img_width, img_height))
-    for i in range(channels):
-        projection = projections[i]
-        rev_intensity = projection[projection[:,2].argsort()]
-        rev_intensity = rev_intensity[::-1]
-        for point in rev_intensity:
-            img[i][int(point[0])][int(point[1])] = 1 - point[2]
-    return img
+def save_train_test_raster_data(read_train_path, save_train_path, read_test_path, save_test_path, 
+    num_points, img_width, img_height):
+    save_raster_data(read_train_path, save_train_path, num_points, img_width, img_height)
+    save_raster_data(read_test_path, save_test_path, num_points, img_width, img_height)
 
-# index = 500
-# point_cloud = train_points_r[index]
-# img = rasterize(point_cloud, 64, 64, planes)
+if __name__ == "__main__":
+    RAW_TRAIN_PATH = "data/train/raw/"
+    RAW_TEST_PATH = "data/test/raw/"
+    SAVE_TRAIN_PATH = "data/train/"
+    SAVE_TEST_PATH = "data/test/"
+    NUM_POINTS = 2048
+    IMG_WIDTH = 64
+    IMG_HEIGHT = 64
+    save_train = SAVE_TRAIN_PATH + "train_" + str(NUM_POINTS) + "_" + str(IMG_WIDTH) + ".h5"
+    save_test = SAVE_TEST_PATH + "test_" + str(NUM_POINTS) + "_" + str(IMG_WIDTH) + ".h5"
+    save_train_test_raster_data(RAW_TRAIN_PATH, save_train, RAW_TEST_PATH, save_test, NUM_POINTS,
+        IMG_WIDTH, IMG_HEIGHT)

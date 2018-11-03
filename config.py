@@ -1,4 +1,7 @@
-TRAIN_PATH = "data/train/"
-TEST_PATH = "data/test/"
+TRAIN_PATH = "data/train/train_2048_64.h5"
+TEST_PATH = "data/test/test_2048_64.h5"
 NUM_POINTS = 2048
 NUM_CLASSES = 40
+
+# IMAGE_WIDTH = 64
+# IMAGE_HEIGHT = 64
