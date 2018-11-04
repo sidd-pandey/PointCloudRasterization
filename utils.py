@@ -4,6 +4,7 @@ import h5py
 import matplotlib.pyplot as plt
 import sklearn.metrics
 import keras.utils
+import skimage.morphology as morphology
 from keras.utils import np_utils
 from tqdm import tqdm
 from projections import rasterize, planes
@@ -96,6 +97,20 @@ def save_model_history(modelname, history, model, y_true, y_pred):
     summary_file.write("accuracy_score: " + str(sklearn.metrics.accuracy_score(y_true, y_pred)) + "\n")
     summary_file.close()
 
+def morph(img):
+    for i in range(img.shape[0]):
+        morphed = (img[i] * 255).astype(np.int16)
+        morphed = morphology.dilation(morphed, morphology.diamond(2))
+        morphed = (morphed / 255).astype(np.float32)
+        img[i] = morphed
+    return img
+
+def enhance(imgs):
+    enhanced_imgs = np.zeros_like(imgs)
+    for index in tqdm(range(imgs.shape[0])):
+        enhanced_imgs[index] = morph(imgs[index])
+    return enhanced_imgs
+    
 
 if __name__ == "__main__":
     RAW_TRAIN_PATH = "data/train/raw/"
