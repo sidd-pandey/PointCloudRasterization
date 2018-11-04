@@ -6,7 +6,7 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import SGD
-from utils import read_data, plot_history
+from utils import read_data, save_model_history
 from keras.utils import np_utils
 from config import *
 
@@ -43,13 +43,16 @@ model.summary()
 
 early_stopping = EarlyStopping(monitor="val_loss", patience=10)
 model_checkpoint = ModelCheckpoint("saved_models/best_model.h5", save_best_only=True, verbose=1)
-history = model.fit(X_train, labels, epochs=1, batch_size=512,
+history = model.fit(X_train, labels, epochs=50, batch_size=512,
     validation_split=0.2, callbacks=[early_stopping, model_checkpoint])
 
 test_labels = np_utils.to_categorical(Y_test, num_classes=NUM_CLASSES)
 
+y_pred = model.predict(X_test)
+y_pred = y_pred.argmax(axis=-1)
+y_pred = np_utils.to_categorical(y_pred, num_classes=NUM_CLASSES)
+
 score = model.evaluate(x=X_test, y=test_labels)
 print("test loss & accuracy: ", score)
 
-plot_history(history)
-keras.utils.plot_model(model, to_file="saved_models/model_desc.png", show_shapes=True)
+save_model_history("convnet", history, model, test_labels, y_pred)

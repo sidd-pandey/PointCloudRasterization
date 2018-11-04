@@ -2,6 +2,8 @@ import numpy as np
 import os
 import h5py
 import matplotlib.pyplot as plt
+import sklearn.metrics
+import keras.utils
 from keras.utils import np_utils
 from tqdm import tqdm
 from projections import rasterize, planes
@@ -59,7 +61,7 @@ def save_train_test_raster_data(read_train_path, save_train_path, read_test_path
     save_raster_data(read_train_path, save_train_path, num_points, img_width, img_height)
     save_raster_data(read_test_path, save_test_path, num_points, img_width, img_height)
 
-def plot_history(history):
+def plot_history(history, path):
     #  "Accuracy"
     plt.figure()
     plt.plot(history.history['acc'])
@@ -68,7 +70,7 @@ def plot_history(history):
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig("saved_models/accuracy.png", dpi=300)
+    plt.savefig(path+"/accuracy.png", dpi=300)
     # "Loss"
     plt.figure()
     plt.plot(history.history['loss'])
@@ -77,7 +79,23 @@ def plot_history(history):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig("saved_models/loss.png", dpi=300)
+    plt.savefig(path+"/loss.png", dpi=300)
+
+def save_model_history(modelname, history, model, y_true, y_pred):
+    path = "saved_models/" + modelname
+    if not os.path.exists(path):
+        os.makedirs(path)
+    # save plots
+    plot_history(history, path)
+    # save model desc
+    keras.utils.plot_model(model, to_file=path+"/model_desc.png", show_shapes=True)
+    # save metrics
+    summary_file = open(path+"/summary.txt","w", encoding="utf-8")
+    summary_file.writelines(sklearn.metrics.classification_report(y_true, y_pred))
+    summary_file.write("\n")
+    summary_file.write("accuracy_score: " + str(sklearn.metrics.accuracy_score(y_true, y_pred)) + "\n")
+    summary_file.close()
+
 
 if __name__ == "__main__":
     RAW_TRAIN_PATH = "data/train/raw/"
@@ -91,5 +109,5 @@ if __name__ == "__main__":
     save_test = SAVE_TEST_PATH + "test_" + str(NUM_POINTS) + "_" + str(IMG_WIDTH) + ".h5"
     # save_train_test_raster_data(RAW_TRAIN_PATH, save_train, RAW_TEST_PATH, save_test, NUM_POINTS,
     #     IMG_WIDTH, IMG_HEIGHT)
-    save_raster_data(RAW_TEST_PATH, save_test, NUM_POINTS, IMG_WIDTH, IMG_HEIGHT)
+    save_raster_data(RAW_TRAIN_PATH, save_train, NUM_POINTS, IMG_WIDTH, IMG_HEIGHT)
 
