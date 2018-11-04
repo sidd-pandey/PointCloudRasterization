@@ -41,7 +41,8 @@ model.add(Dense(128, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(40, activation='softmax'))
 
-model.compile(optimizer='adam',
+adam = keras.optimizers.Adam(lr=0.0001)
+model.compile(optimizer=adam,
             loss='categorical_crossentropy',
             metrics=['accuracy'])
 
@@ -66,14 +67,11 @@ history = model.fit_generator(datagen.flow(X_train, labels, batch_size=32),
 
 test_labels = np_utils.to_categorical(Y_test, num_classes=NUM_CLASSES)
 
-print("loading best model...")
-best_model = keras.models.load_model("saved_models/" + FOLDER_NAME + "/best_model.h5")
-
-y_pred = best_model.predict(X_test)
+y_pred = model.predict(X_test)
 y_pred = y_pred.argmax(axis=-1)
 y_pred = np_utils.to_categorical(y_pred, num_classes=NUM_CLASSES)
 
-score = best_model.evaluate(x=X_test, y=test_labels)
+score = model.evaluate(x=X_test, y=test_labels)
 print("test loss & accuracy: ", score)
 
 save_model_history(FOLDER_NAME, history, model, test_labels, y_pred)
