@@ -59,6 +59,26 @@ def save_train_test_raster_data(read_train_path, save_train_path, read_test_path
     save_raster_data(read_train_path, save_train_path, num_points, img_width, img_height)
     save_raster_data(read_test_path, save_test_path, num_points, img_width, img_height)
 
+def plot_history(history):
+    #  "Accuracy"
+    plt.figure()
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.savefig("saved_models/accuracy.png", dpi=300)
+    # "Loss"
+    plt.figure()
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.savefig("saved_models/loss.png", dpi=300)
+
 if __name__ == "__main__":
     RAW_TRAIN_PATH = "data/train/raw/"
     RAW_TEST_PATH = "data/test/raw/"
@@ -72,3 +92,4 @@ if __name__ == "__main__":
     # save_train_test_raster_data(RAW_TRAIN_PATH, save_train, RAW_TEST_PATH, save_test, NUM_POINTS,
     #     IMG_WIDTH, IMG_HEIGHT)
     save_raster_data(RAW_TEST_PATH, save_test, NUM_POINTS, IMG_WIDTH, IMG_HEIGHT)
+
