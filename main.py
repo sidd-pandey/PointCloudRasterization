@@ -8,13 +8,10 @@ from keras.utils import np_utils
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import os
 
-<<<<<<< HEAD
 FOLDER_NAME = "dense"
 if not os.path.exists("saved_models/" + FOLDER_NAME):
     os.makedirs("saved_models/" + FOLDER_NAME)
 
-=======
->>>>>>> enhancements
 X_train, Y_train = read_data(TRAIN_PATH, NUM_POINTS)
 X_test, Y_test = read_data(TEST_PATH, NUM_POINTS)
 labels = np_utils.to_categorical(Y_train, num_classes=40)
