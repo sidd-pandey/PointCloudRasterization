@@ -11,6 +11,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+saved_models/
 build/
 develop-eggs/
 dist/
