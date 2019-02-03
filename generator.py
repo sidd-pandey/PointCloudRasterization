@@ -26,14 +26,18 @@ class ViewGenerator(keras.utils.Sequence):
         subset = self.pointcloud[indexes]
         subset_lables = self.labels[indexes]
 
+        X_arr = []
         X = np.empty((self.batch_size, self.channels, self.dim, self.dim))
         y = np.empty((self.batch_size, 1), dtype = int)
 
         for i in range(0, len(subset)):
             X[i,:,:,:] = projections.rasterize(subset[i], self.dim, self.dim, projections.planes)
             y[i, :] = subset_lables[i]
+       
+        for i in range(X.shape[1]):
+            X_arr.append(np.expand_dims(X[:,i,:,:], axis=1))
 
-        return X, keras.utils.to_categorical(y, num_classes=self.n_classes)
+        return X_arr, keras.utils.to_categorical(y, num_classes=self.n_classes)
 
     def __getitem__(self, index):
         # index to the batch

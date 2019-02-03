@@ -13,6 +13,7 @@ from keras.layers.core import Lambda
 from keras.utils import np_utils
 import utils
 import os
+import generator
 keras.backend.set_image_data_format('channels_first')
 
 def main(runtime):
@@ -20,9 +21,11 @@ def main(runtime):
         TRAIN_PATH = "gdrive/My Drive/colab_notebooks/PointCloud/data/train/train_2048_64.h5"
         TEST_PATH = "gdrive/My Drive/colab_notebooks/PointCloud/data/test/test_2048_64.h5"
         CHECKPOINT_PATH = "gdrive/My Drive/colab_notebooks/data/point_cloud/"
+        RAW_FILES = "gdrive/My Drive/colab_notebooks/PointCloud/data/raw/"
     else:
         TRAIN_PATH = "data/train/train_2048_64.h5"
         TEST_PATH = "data/test/test_2048_64.h5"
+        RAW_FILES = "data/train/raw/"
         CHECKPOINT_PATH = "saved_models/"
     
     NUM_POINTS = 2048
@@ -31,19 +34,18 @@ def main(runtime):
     IMAGE_WIDTH = 64
     IMAGE_HEIGHT = 64
 
-    X_train, Y_train = utils.read_data(TRAIN_PATH, NUM_POINTS)
+    # X_train, Y_train = utils.read_data(TRAIN_PATH, NUM_POINTS)
+    data_generator = generator.ViewGenerator(RAW_FILES)
+
     X_test, Y_test = utils.read_data(TEST_PATH, NUM_POINTS)
-    Y_train_ohe = np_utils.to_categorical(Y_train, num_classes=NUM_CLASSES)
     Y_test_ohe = np_utils.to_categorical(Y_test, num_classes=NUM_CLASSES)
 
     inputs_layers = []
-    for i in range(X_train.shape[1]):
+    for i in range(X_test.shape[1]):
         inputs_layers.append(Input(shape=(1, IMAGE_WIDTH, IMAGE_HEIGHT)))
 
-    X_train_arr = []
     X_test_arr = []
-    for i in range(X_train.shape[1]):
-        X_train_arr.append(np.expand_dims(X_train[:,i,:,:], axis=1))
+    for i in range(X_test.shape[1]):
         X_test_arr.append(np.expand_dims(X_test[:,i,:,:], axis=1))
 
 
@@ -68,7 +70,7 @@ def main(runtime):
         return X
 
     intermediate_ouptus = []
-    for i in range(X_train.shape[1]):
+    for i in range(X_test.shape[1]):
         intermediate_ouptus.append(get_output(inputs_layers[i]))
         
     concatenate_layer = keras.layers.merge.concatenate(intermediate_ouptus, axis=1)
@@ -91,7 +93,7 @@ def main(runtime):
 
 
     model_checkpoint = ModelCheckpoint(CHECKPOINT_PATH+"best_model.h5", save_best_only=True, verbose=1, monitor="val_acc")
-    history = model.fit(X_train_arr, Y_train_ohe, epochs=50, batch_size=256, validation_split=0.2, callbacks=[model_checkpoint])
+    history = model.fit_generator(generator=data_generator)
     y_pred = model.predict(X_test_arr)
     y_pred = y_pred.argmax(axis=-1)
     y_pred = np_utils.to_categorical(y_pred, num_classes=NUM_CLASSES)
